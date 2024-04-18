@@ -11,8 +11,8 @@ mediaYouTubeURL = "#"
 mediaDiscordURL = "https://discord.gg/y6HDfuqs7H"
 
 [ejs.settings]
-sourceGithubLink = "https://github.com/dscalZi/HeliosLauncher"
-supportLink = "https://github.com/dscalZi/HeliosLauncher/issues"
+sourceGithubLink = "https://github.com/wally720/MCSquad"
+supportLink = "https://github.com/wally720/MCSquad/issues"
 
 [ejs.welcome]
 welcomeHeader = "Bienvenido a la MCSquad"
