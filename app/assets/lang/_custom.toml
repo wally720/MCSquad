@@ -4,7 +4,7 @@
 title = "MCSquad Launcher"
 
 [ejs.landing]
-mediaGitHubURL = "#"
+mediaGitHubURL = "https://github.com/wally720/mcsquad"
 mediaTwitterURL = "https://twitter.com/salvamecraftx"
 mediaInstagramURL = "https://twitter.com/wally720f"
 mediaYouTubeURL = "#"
