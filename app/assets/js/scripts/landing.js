@@ -100,7 +100,7 @@ function setLaunchEnabled(val){
 
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
-    loggerLanding.info('Launching game..')
+    loggerLanding.info('Iniciando el juego..')
     try {
         const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
         const jExe = ConfigManager.getJavaExecutable(ConfigManager.getSelectedServer())
@@ -114,7 +114,7 @@ document.getElementById('launch_button').addEventListener('click', async e => {
 
             const details = await validateSelectedJvm(ensureJavaDirIsRoot(jExe), server.effectiveJavaOptions.supported)
             if(details != null){
-                loggerLanding.info('Jvm Details', details)
+                loggerLanding.info('Detalles de JavaM', details)
                 await dlAsync()
 
             } else {
@@ -122,7 +122,7 @@ document.getElementById('launch_button').addEventListener('click', async e => {
             }
         }
     } catch(err) {
-        loggerLanding.error('Unhandled error in during launch process.', err)
+        loggerLanding.error('Error no manejado durante el proceso de lanzamiento.', err)
         showLaunchFailure(Lang.queryJS('landing.launch.failureTitle'), Lang.queryJS('landing.launch.failureText'))
     }
 })
@@ -178,7 +178,7 @@ server_selection_button.onclick = async e => {
 
 // Update Mojang Status Color
 const refreshMojangStatuses = async function(){
-    loggerLanding.info('Refreshing Mojang Statuses..')
+    loggerLanding.info('Actualizando los estados de Mojang..')
 
     let status = 'grey'
     let tooltipEssentialHTML = ''
@@ -189,7 +189,7 @@ const refreshMojangStatuses = async function(){
     if(response.responseStatus === RestResponseStatus.SUCCESS) {
         statuses = response.data
     } else {
-        loggerLanding.warn('Unable to refresh Mojang service status.')
+        loggerLanding.warn('No se puede actualizar el estado del servicio de Mojang.')
         statuses = MojangRestAPI.getDefaultStatuses()
     }
     
@@ -250,7 +250,7 @@ const refreshServerStatus = async (fade = false) => {
         pVal = servStat.players.online + '/' + servStat.players.max
 
     } catch (err) {
-        loggerLanding.warn('Unable to refresh server status, assuming offline.')
+        loggerLanding.warn('No se puede actualizar el estado del servidor, asumiendo que está desconectado.')
         loggerLanding.debug(err)
     }
     if(fade){
@@ -325,7 +325,7 @@ async function asyncSystemScan(effectiveJavaOptions, launchAfter = true){
             try {
                 downloadJava(effectiveJavaOptions, launchAfter)
             } catch(err) {
-                loggerLanding.error('Unhandled error in Java Download', err)
+                loggerLanding.error('Error no manejado en la descarga de Java', err)
                 showLaunchFailure(Lang.queryJS('landing.systemScan.javaDownloadFailureTitle'), Lang.queryJS('landing.systemScan.javaDownloadFailureText'))
             }
         })
@@ -460,7 +460,7 @@ async function dlAsync(login = true) {
         distro = await DistroAPI.refreshDistributionOrFallback()
         onDistroRefresh(distro)
     } catch(err) {
-        loggerLaunchSuite.error('Unable to refresh distribution index.', err)
+        loggerLaunchSuite.error('No se puede actualizar el index de distribución.', err)
         showLaunchFailure(Lang.queryJS('landing.dlAsync.fatalError'), Lang.queryJS('landing.dlAsync.unableToLoadDistributionIndex'))
         return
     }
@@ -469,7 +469,7 @@ async function dlAsync(login = true) {
 
     if(login) {
         if(ConfigManager.getSelectedAccount() == null){
-            loggerLanding.error('You must be logged into an account.')
+            loggerLanding.error('Debes estar conectado a una cuenta.')
             return
         }
     }
@@ -489,17 +489,17 @@ async function dlAsync(login = true) {
     fullRepairModule.spawnReceiver()
 
     fullRepairModule.childProcess.on('error', (err) => {
-        loggerLaunchSuite.error('Error during launch', err)
+        loggerLaunchSuite.error('Error durante el lanzamiento', err)
         showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), err.message || Lang.queryJS('landing.dlAsync.errorDuringLaunchText'))
     })
     fullRepairModule.childProcess.on('close', (code, _signal) => {
         if(code !== 0){
-            loggerLaunchSuite.error(`Full Repair Module exited with code ${code}, assuming error.`)
+            loggerLaunchSuite.error(`El Módulo de Reparación Completa salió con el código ${code}, asumiendo error.`)
             showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
         }
     })
 
-    loggerLaunchSuite.info('Validating files.')
+    loggerLaunchSuite.info('Validando archivos.')
     setLaunchDetails(Lang.queryJS('landing.dlAsync.validatingFileIntegrity'))
     let invalidFileCount = 0
     try {
@@ -508,14 +508,14 @@ async function dlAsync(login = true) {
         })
         setLaunchPercentage(100)
     } catch (err) {
-        loggerLaunchSuite.error('Error during file validation.')
+        loggerLaunchSuite.error('Error durante la validación de archivos.')
         showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileVerificationTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
         return
     }
     
 
     if(invalidFileCount > 0) {
-        loggerLaunchSuite.info('Downloading files.')
+        loggerLaunchSuite.info('Descargando archivos.')
         setLaunchDetails(Lang.queryJS('landing.dlAsync.downloadingFiles'))
         setLaunchPercentage(0)
         try {
@@ -524,12 +524,12 @@ async function dlAsync(login = true) {
             })
             setDownloadPercentage(100)
         } catch(err) {
-            loggerLaunchSuite.error('Error during file download.')
+            loggerLaunchSuite.error('Error durante la descarga de archivos.')
             showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileDownloadTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
             return
         }
     } else {
-        loggerLaunchSuite.info('No invalid files, skipping download.')
+        loggerLaunchSuite.info('No hay archivos inválidos, omitiendo descarga.')
     }
 
     // Remove download bar.
@@ -598,8 +598,8 @@ async function dlAsync(login = true) {
 
         const gameErrorListener = function(data){
             data = data.trim()
-            if(data.indexOf('Could not find or load main class net.minecraft.launchwrapper.Launch') > -1){
-                loggerLaunchSuite.error('Game launch failed, LaunchWrapper was not downloaded properly.')
+            if(data.indexOf('No se pudo encontrar o cargar la clase principal net.minecraft.launchwrapper.Launch') > -1){
+                loggerLaunchSuite.error('El lanzamiento del juego falló, LaunchWrapper no se descargó correctamente.')
                 showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.launchWrapperNotDownloaded'))
             }
         }
@@ -619,7 +619,7 @@ async function dlAsync(login = true) {
                 DiscordWrapper.initRPC(distro.rawDistribution.discord, serv.rawServer.discord)
                 hasRPC = true
                 proc.on('close', (code, signal) => {
-                    loggerLaunchSuite.info('Shutting down Discord Rich Presence..')
+                    loggerLaunchSuite.info('Cerrando Discord Rich Presence..')
                     DiscordWrapper.shutdownRPC()
                     hasRPC = false
                     proc = null
@@ -628,7 +628,7 @@ async function dlAsync(login = true) {
 
         } catch(err) {
 
-            loggerLaunchSuite.error('Error during launch', err)
+            loggerLaunchSuite.error('Error durante el lanzamiento', err)
             showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.checkConsoleForDetails'))
 
         }

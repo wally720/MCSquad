@@ -27,14 +27,15 @@ loginOptionMicrosoft.onclick = (e) => {
         )
     })
 }
+// Se retira el evento onclick del botón de Mojang
 
-loginOptionMojang.onclick = (e) => {
+/* loginOptionMojang.onclick = (e) => {
     switchView(getCurrentView(), VIEWS.login, 500, 500, () => {
         loginViewOnSuccess = loginOptionsViewOnLoginSuccess
         loginViewOnCancel = loginOptionsViewOnLoginCancel
         loginCancelEnabled(true)
     })
-}
+} */
 
 loginOptionsCancelButton.onclick = (e) => {
     switchView(getCurrentView(), loginOptionsViewOnCancel, 500, 500, () => {

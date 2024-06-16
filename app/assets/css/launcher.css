@@ -3181,16 +3181,22 @@ input:checked + .toggleSwitchSlider:before {
 
 /* Style for a general label on the bottom of the landing view. */
 .bot_label {
-    font-size: 9px;
+    font-size: 16px;
     letter-spacing: 1px;
     font-weight: bold;
+    text-shadow: 0px 0px 0px #bebcbb;
+}
+
+.small-text {
+    font-size: 8px; /* O el tamaño que desees */
+    letter-spacing: 1px;
     text-shadow: 0px 0px 0px #bebcbb;
 }
 
 /* Divider used on the bottom of the landing view. */
 .bot_divider {
     height: 25px;
-    width: 2px;
+    width: 4px;
     background: rgba(107, 105, 105, 0.7);
     margin-left: 20px;
     margin-right: 20px;
@@ -3203,13 +3209,18 @@ input:checked + .toggleSwitchSlider:before {
 /* Maintains maximum width on the status bar. */
 #server_status_wrapper {
     display: inline-flex;
-    width: 75px;
+    width: 120px;
+    padding: 15px; /* Ajustar el padding para aumentar el espacio interno */
+    margin: 12px;  /* Ajustar el margen para aumentar el espacio externo */
+    font-size: 1.5em; /* Aumentar el tamaño de la fuente */
+    /* background-color: #f0f0f0; Fondo opcional para visualizar mejor el área */
+    border-radius: 8px; /* Opcional, para bordes redondeados */
 }
 
 /* Span which displays the player count of the selected server. */
 #player_count {
     color: #949494;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 900;
     text-shadow: 0px 0px 20px #949494;
     margin-left: 10px;
