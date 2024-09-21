@@ -212,7 +212,7 @@ checking = "Comprobando noticias"
 [js.landing.discord]
 loading = "Cargando el juego..."
 joining = "¡Explorando un mundo sin fin de posibilidades!"
-joined = "¡En una aventura única!"
+joined = "¡En una aventura inolvidable!"
 
 [js.overlay]
 dismiss = "Descartar"
