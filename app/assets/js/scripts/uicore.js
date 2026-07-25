@@ -37,58 +37,67 @@ webFrame.setVisualZoomLevelLimits(1, 1)
 
 // Initialize auto updates in production environments.
 let updateCheckListener
+
+function handleAutoUpdateNotification(arg, info){
+    switch(arg){
+        case 'checking-for-update':
+            loggerAutoUpdater.info('Checking for update..')
+            setTransientUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkingForUpdateButton'), true)
+            break
+        case 'update-available':
+            loggerAutoUpdater.info('New update available', info.version)
+
+            if(process.platform === 'darwin'){
+                info.darwindownload = `https://github.com/wally720/mcsquaddev/releases/download/v${info.version}/MCSquad-Dev-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
+            }
+            showUpdateUI(info)
+            populateSettingsUpdateInformation(info)
+            break
+        case 'update-downloaded':
+            loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
+            settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
+                if(!isDev){
+                    ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+                }
+            })
+            showUpdateUI(info, 'ready')
+            break
+        case 'update-not-available':
+            loggerAutoUpdater.info('No new update found.')
+            setTransientUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
+            clearTransientUpdateUI()
+            break
+        case 'ready':
+            updateCheckListener = setInterval(() => {
+                ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+            }, 1800000)
+            ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+            break
+        case 'realerror':
+            if(updateUIState !== 'ready'){
+                clearTransientUpdateUI()
+                restoreUpdateCheckButton()
+            }
+            if(info != null && info.code != null){
+                if(info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED'){
+                    loggerAutoUpdater.info('No suitable releases found.')
+                } else if(info.code === 'ERR_XML_MISSED_ELEMENT'){
+                    loggerAutoUpdater.info('No releases found.')
+                } else {
+                    loggerAutoUpdater.error('Error during update check..', info)
+                    loggerAutoUpdater.debug('Error Code:', info.code)
+                }
+            }
+            break
+        default:
+            loggerAutoUpdater.info('Unknown argument', arg)
+            break
+    }
+}
+
 if(!isDev){
     ipcRenderer.on('autoUpdateNotification', (event, arg, info) => {
-        switch(arg){
-            case 'checking-for-update':
-                loggerAutoUpdater.info('Checking for update..')
-                settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkingForUpdateButton'), true)
-                break
-            case 'update-available':
-                loggerAutoUpdater.info('New update available', info.version)
-                
-                if(process.platform === 'darwin'){
-                    info.darwindownload = `https://github.com/wally720/mcsquad/releases/download/v${info.version}/MCSquad-Launcher-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
-                    showUpdateUI(info)
-                }
-                
-                populateSettingsUpdateInformation(info)
-                break
-            case 'update-downloaded':
-                loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
-                settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
-                    if(!isDev){
-                        ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
-                    }
-                })
-                showUpdateUI(info)
-                break
-            case 'update-not-available':
-                loggerAutoUpdater.info('No new update found.')
-                settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
-                break
-            case 'ready':
-                updateCheckListener = setInterval(() => {
-                    ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
-                }, 1800000)
-                ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
-                break
-            case 'realerror':
-                if(info != null && info.code != null){
-                    if(info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED'){
-                        loggerAutoUpdater.info('No suitable releases found.')
-                    } else if(info.code === 'ERR_XML_MISSED_ELEMENT'){
-                        loggerAutoUpdater.info('No releases found.')
-                    } else {
-                        loggerAutoUpdater.error('Error during update check..', info)
-                        loggerAutoUpdater.debug('Error Code:', info.code)
-                    }
-                }
-                break
-            default:
-                loggerAutoUpdater.info('Unknown argument', arg)
-                break
-        }
+        handleAutoUpdateNotification(arg, info)
     })
 }
 
@@ -97,33 +106,134 @@ if(!isDev){
  * allowPrerelease. If we are running a prerelease version, then
  * this will always be set to true, regardless of the current value
  * of val.
- * 
+ *
  * @param {boolean} val The new allow prerelease value.
  */
 function changeAllowPrerelease(val){
     ipcRenderer.send('autoUpdateAction', 'allowPrereleaseChange', val)
 }
 
-function showUpdateUI(info){
-    //TODO Make this message a bit more informative `${info.version}`
-    document.getElementById('image_seal_container').setAttribute('update', true)
-    document.getElementById('image_seal_container').onclick = () => {
-        /*setOverlayContent('Update Available', 'A new update for the launcher is available. Would you like to install now?', 'Install', 'Later')
-        setOverlayHandler(() => {
-            if(!isDev){
-                ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
-            } else {
-                console.error('Cannot install updates in development environment.')
-                toggleOverlay(false)
+function renderUpdateUI(){
+    const missionCopy = {
+        available: {
+            title: 'Misión disponible',
+            description: 'Hay una actualización para revisar.',
+            ariaLabel: 'Misión disponible. Abrir Ajustes para revisar la actualización.'
+        },
+        downloading: {
+            title: 'Descargando actualización',
+            description: 'La nueva versión se está preparando.',
+            ariaLabel: 'Descargando actualización. Abrir Ajustes para ver el progreso.'
+        },
+        ready: {
+            title: 'Actualización lista',
+            description: 'Puedes instalarla desde Ajustes.',
+            ariaLabel: 'Actualización lista. Abrir Ajustes para instalarla.'
+        },
+        normal: {
+            title: 'Misión disponible',
+            description: 'No hay actualizaciones pendientes.',
+            ariaLabel: ''
+        }
+    }
+    const labelKeys = {
+        available: 'uicore.autoUpdate.availableStatus',
+        downloading: 'uicore.autoUpdate.downloadingStatus',
+        ready: 'uicore.autoUpdate.readyStatus'
+    }
+    const label = labelKeys[updateUIState] != null ? Lang.queryJS(labelKeys[updateUIState]) : null
+    const active = label != null
+    const updateNav = document.getElementById('settingsNavUpdate')
+    const updateIndicator = document.getElementById('settingsUpdateAvailableIndicator')
+    const updateMission = document.querySelector('[data-sa-update-mission]')
+    const updateBrand = document.querySelector('.sa-brand')
+    const currentMissionCopy = missionCopy[updateUIState] || missionCopy.normal
+
+    if(updateNav != null){
+        if(active){
+            updateNav.setAttribute('update', '')
+            if(updateIndicator != null){
+                updateNav.setAttribute('aria-describedby', updateIndicator.id)
             }
-        })
-        setDismissHandler(() => {
-            toggleOverlay(false)
-        })
-        toggleOverlay(true, true)*/
-        switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
-            settingsNavItemListener(document.getElementById('settingsNavUpdate'), false)
-        })
+            updateNav.setAttribute('data-update-state', updateUIState)
+        } else {
+            updateNav.removeAttribute('update')
+            updateNav.removeAttribute('aria-describedby')
+            updateNav.removeAttribute('data-update-state')
+        }
+    }
+    if(updateIndicator != null){
+        updateIndicator.hidden = !active
+        if(active){
+            updateIndicator.textContent = label
+            updateIndicator.setAttribute('aria-label', label)
+            updateIndicator.setAttribute('data-update-state', updateUIState)
+        } else {
+            updateIndicator.textContent = ''
+            updateIndicator.removeAttribute('aria-label')
+            updateIndicator.removeAttribute('data-update-state')
+        }
+    }
+    if(updateMission != null){
+        updateMission.hidden = !active
+        const missionTitle = updateMission.querySelector('[data-sa-update-title]')
+        const missionDescription = updateMission.querySelector('[data-sa-update-description]')
+        if(missionTitle != null){
+            missionTitle.textContent = currentMissionCopy.title
+        }
+        if(missionDescription != null){
+            missionDescription.textContent = currentMissionCopy.description
+        }
+        if(active){
+            updateMission.setAttribute('aria-label', currentMissionCopy.ariaLabel)
+            updateMission.setAttribute('data-update-state', updateUIState)
+        } else {
+            updateMission.removeAttribute('aria-label')
+            updateMission.removeAttribute('data-update-state')
+        }
+    }
+    if(updateBrand != null){
+        if(active){
+            updateBrand.setAttribute('data-update-state', updateUIState)
+        } else {
+            updateBrand.removeAttribute('data-update-state')
+        }
+    }
+}
+
+let updateUIState = 'normal'
+
+function setUpdateUIState(state){
+    updateUIState = ['available', 'downloading', 'ready'].includes(state) ? state : 'normal'
+    renderUpdateUI()
+}
+
+function setTransientUpdateButtonStatus(text, disabled = false){
+    if(updateUIState !== 'ready'){
+        settingsUpdateButtonStatus(text, disabled)
+    }
+}
+
+function restoreUpdateCheckButton(){
+    settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'), false, () => {
+        if(!isDev){
+            ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+            settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkingForUpdateButton'), true)
+        }
+    })
+}
+
+function showUpdateUI(info, state = process.platform === 'darwin' ? 'available' : 'downloading'){
+    setUpdateUIState(info?.state || state)
+}
+
+function clearUpdateUI(){
+    setUpdateUIState('normal')
+}
+
+function clearTransientUpdateUI(){
+    if(updateUIState !== 'ready'){
+        clearUpdateUI()
     }
 }
 
@@ -135,6 +245,7 @@ $(function(){
 document.addEventListener('readystatechange', function () {
     if (document.readyState === 'interactive'){
         loggerUICore.info('UICore Initializing..')
+        renderUpdateUI()
 
         // Bind close button.
         Array.from(document.getElementsByClassName('fCb')).map((val) => {
@@ -166,28 +277,6 @@ document.addEventListener('readystatechange', function () {
             })
         })
 
-        // Remove focus from social media buttons once they're clicked.
-        Array.from(document.getElementsByClassName('mediaURL')).map(val => {
-            val.addEventListener('click', e => {
-                document.activeElement.blur()
-            })
-        })
-
-    } else if(document.readyState === 'complete'){
-
-        //266.01
-        //170.8
-        //53.21
-        // Bind progress bar length to length of bot wrapper
-        //const targetWidth = document.getElementById("launch_content").getBoundingClientRect().width
-        //const targetWidth2 = document.getElementById("server_selection").getBoundingClientRect().width
-        //const targetWidth3 = document.getElementById("launch_button").getBoundingClientRect().width
-
-        document.getElementById('launch_details').style.maxWidth = 266.01
-        document.getElementById('launch_progress').style.width = 170.8
-        document.getElementById('launch_details_right').style.maxWidth = 170.8
-        document.getElementById('launch_progress_label').style.width = 53.21
-        
     }
 
 }, false)
@@ -203,7 +292,7 @@ $(document).on('click', 'a[href^="http"]', function(event) {
 /**
  * Opens DevTools window if you hold (ctrl + shift + i).
  * This will crash the program if you are using multiple
- * DevTools, for example the chrome debugger in VS Code. 
+ * DevTools, for example the chrome debugger in VS Code.
  */
 document.addEventListener('keydown', function (e) {
     if((e.key === 'I' || e.key === 'i') && e.ctrlKey && e.shiftKey){

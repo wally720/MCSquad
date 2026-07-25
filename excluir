@@ -1,0 +1,64 @@
+# Inventario de residuos generados por IA
+
+Este archivo registra carpetas y artefactos creados o utilizados por OpenCode,
+Gentle AI, CodeGraph, SDD y otras herramientas de IA durante el desarrollo.
+
+Su propósito es permitir una limpieza manual al terminar los cambios. Este
+archivo no autoriza eliminaciones automáticas.
+
+## Regla de mantenimiento
+
+Todo agente que cree o detecte un nuevo artefacto local relacionado con IA debe:
+
+1. Agregar su ruta a este inventario.
+2. Indicar qué herramienta lo generó.
+3. Marcar si está presente o si solo podría generarse más adelante.
+4. No confundir entregables reales del producto con residuos de herramientas.
+
+## Presentes actualmente
+
+| Ruta | Herramienta u origen | Contenido | Precaución |
+| --- | --- | --- | --- |
+| `.atl/` | Gentle AI | Registro de skills y caché local. | Regenerable. |
+| `.codegraph/` | CodeGraph | Índice SQLite, logs, PID y archivos temporales. | Regenerable; cada checkout necesita su propio índice. |
+| `.git/opencode` | OpenCode | Identificador local que vincula el repositorio con sus sesiones. | Está dentro de `.git`; no eliminar `.git` completo. |
+| `.git/gentle-ai/` | Gentle AI | Revisiones, estados, resultados, hashes y locks locales. | Está dentro de `.git`; puede contener revisiones activas o históricas. |
+| `docs/mockups/launcher-redesign/` | Trabajo asistido por IA | Mockups, fixtures, estilos y prototipos del rediseño. | Es un entregable experimental, no metadata; revisar antes de eliminar. |
+
+## Pueden generarse más adelante
+
+Estas rutas no necesariamente existen ahora. Deben marcarse como presentes si
+alguna herramienta las crea.
+
+| Ruta | Herramienta u origen | Contenido posible |
+| --- | --- | --- |
+| `openspec/` | SDD / OpenSpec | Propuestas, especificaciones, diseños, tareas y verificaciones. |
+| `.opencode/` | OpenCode | Configuración, comandos o agentes específicos del proyecto. |
+| `.claude/` | Claude Code | Configuración, agentes, planes o cachés del proyecto. |
+| `.agents/` | Herramientas de agentes | Skills y configuración local de agentes. |
+| `AGENTS.md` | Agentes de desarrollo | Instrucciones compartidas para agentes. |
+| `CLAUDE.md` | Claude Code | Instrucciones compartidas para Claude. |
+| `.mcp.json` | Clientes MCP | Configuración local de servidores MCP. |
+
+## Datos relacionados fuera del repositorio
+
+Estas ubicaciones no ensucian directamente el checkout, pero se registran para
+que la limpieza pueda ser completa cuando sea necesario.
+
+| Ruta | Herramienta u origen |
+| --- | --- |
+| `%USERPROFILE%\.local\share\opencode\` | Sesiones, snapshots, logs y resultados de OpenCode. |
+| `%USERPROFILE%\.config\opencode\` | Configuración global, agentes, perfiles y skills de OpenCode. |
+| `%USERPROFILE%\.codegraph\` | Daemons y telemetría global de CodeGraph. |
+| `%USERPROFILE%\.agents\` | Skills globales de agentes. |
+| `%USERPROFILE%\.claude\` | Configuración, historial y cachés globales de Claude. |
+
+## Elementos que no deben clasificarse automáticamente como residuos
+
+- Código, pruebas o configuración aceptados como parte del launcher.
+- Documentación del producto mantenida deliberadamente en `docs/`.
+- Cambios de dependencias necesarios para el launcher productivo.
+- Artefactos SDD o instrucciones de agentes que el equipo decida versionar.
+
+La clasificación depende del propósito del archivo, no de si una IA ayudó a
+crearlo.

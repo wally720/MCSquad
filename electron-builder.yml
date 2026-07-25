@@ -2,13 +2,18 @@ appId: 'mcsquadlauncher'
 productName: 'MCSquad-Launcher'
 artifactName: '${productName}-setup-${version}.${ext}'
 
-copyright: 'Copyright © 2018-2026 Daniel Scalzi'
+copyright: 'Copyright © 2018-2026 WallyenTeras'
 
 asar: true
 compression: 'maximum'
 
 files:
   - '!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,eslint.config.mjs}'
+  - '!.codegraph/**/*'
+  - '!.atl/**/*'
+  - '!test/**/*'
+  - '!excluir'
+  - '!**/*.map'
 
 extraResources:
   - 'libraries'
@@ -39,8 +44,8 @@ mac:
 # Linux Configuration
 linux: 
   target: 'AppImage'
-  maintainer: 'Daniel Scalzi'
-  vendor: 'Daniel Scalzi'
+  maintainer: 'MCSquad'
+  vendor: 'MCSquad'
   synopsis: 'Modded Minecraft Launcher'
   description: 'Custom launcher which allows users to join modded servers. All mods, configurations, and updates are handled automatically.'
   category: 'Game'

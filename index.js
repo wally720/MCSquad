@@ -17,6 +17,15 @@ const LangLoader                        = require('./app/assets/js/langloader')
 LangLoader.setupLanguage()
 
 // Setup auto updater.
+function isNewerUpdate(info) {
+    const currentVersion = semver.valid(app.getVersion())
+    const availableVersion = semver.valid(info?.version)
+
+    return currentVersion != null
+        && availableVersion != null
+        && semver.gt(availableVersion, currentVersion)
+}
+
 function initAutoUpdater(event, data) {
 
     if(data){
@@ -34,9 +43,19 @@ function initAutoUpdater(event, data) {
         autoUpdater.autoDownload = false
     }
     autoUpdater.on('update-available', (info) => {
+        const accepted = isNewerUpdate(info)
+        if(!accepted){
+            event.sender.send('autoUpdateNotification', 'update-not-available', info)
+            return
+        }
         event.sender.send('autoUpdateNotification', 'update-available', info)
     })
     autoUpdater.on('update-downloaded', (info) => {
+        const accepted = isNewerUpdate(info)
+        if(!accepted){
+            event.sender.send('autoUpdateNotification', 'update-not-available', info)
+            return
+        }
         event.sender.send('autoUpdateNotification', 'update-downloaded', info)
     })
     autoUpdater.on('update-not-available', (info) => {
@@ -146,10 +165,10 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
     msftAuthWindow.webContents.on('did-navigate', (_, uri) => {
         if (uri.startsWith(REDIRECT_URI_PREFIX)) {
             let queryMap = {}
-            
+
             new URL(uri).searchParams.forEach((v, k) => {
-                queryMap[k] = v;
-            });
+                queryMap[k] = v
+            })
 
             ipcEvent.reply(MSFT_OPCODE.REPLY_LOGIN, MSFT_REPLY_TYPE.SUCCESS, queryMap, msftAuthViewSuccess)
 
