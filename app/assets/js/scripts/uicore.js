@@ -48,7 +48,7 @@ function handleAutoUpdateNotification(arg, info){
             loggerAutoUpdater.info('New update available', info.version)
 
             if(process.platform === 'darwin'){
-                info.darwindownload = `https://github.com/wally720/mcsquaddev/releases/download/v${info.version}/MCSquad-Dev-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
+                info.darwindownload = `https://github.com/wally720/MCSquad/releases/download/v${info.version}/MCSquad-Launcher-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
             }
             showUpdateUI(info)
             populateSettingsUpdateInformation(info)
