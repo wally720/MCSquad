@@ -10,7 +10,7 @@ const DEFAULT_LAUNCHER_THEME = 'overworld'
 
 const sysRoot = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME)
 
-const dataPath = path.join(sysRoot, '.mcsquaddev')
+const dataPath = path.join(sysRoot, '.mcsquadlauncher')
 
 const launcherDir = require('@electron/remote').app.getPath('userData')
 
