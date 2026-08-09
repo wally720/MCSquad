@@ -1,9 +1,9 @@
 {
   "name": "mcsquadlauncher",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "productName": "MCSquad Launcher",
   "description": "Launcher para todos los proyectos MCSquad",
-  "author": "Daniel Scalzi (https://github.com/dscalzi/) modified by MCSquad ",
+  "author": "Wallyenteras",
   "license": "UNLICENSED",
   "homepage": "https://github.com/wally720/MCSquad",
   "bugs": {
