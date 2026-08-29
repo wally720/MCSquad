@@ -840,7 +840,13 @@ class ProcessBuilder {
         for(let mdl of mdls){
             const type = mdl.rawModule.type
             if(type === Type.ForgeHosted || type === Type.Fabric || type === Type.Library){
-                libs[mdl.getVersionlessMavenIdentifier()] = mdl.getPath()
+                // PARCHE LOCAL (ver docs/upstream-patches.md): el módulo raíz debe respetar
+                // classpath: false igual que los submódulos en _resolveModuleLibraries().
+                // Sin esta guarda el universal de NeoForge se duplica entre classpath y module
+                // path y el juego crashea al arrancar. Reaplicar tras cada merge con upstream.
+                if(mdl.rawModule.classpath ?? true){
+                    libs[mdl.getVersionlessMavenIdentifier()] = mdl.getPath()
+                }
                 if(mdl.subModules.length > 0){
                     const res = this._resolveModuleLibraries(mdl)
                     libs = {...libs, ...res}
