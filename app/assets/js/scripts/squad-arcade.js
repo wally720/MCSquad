@@ -290,7 +290,7 @@
             return
         }
         const active = isHomeActive() && avatarPanel.clientWidth > 0 && avatarPanel.clientHeight > 0
-        const walking = active && !reducedMotion
+        const walking = active && document.hasFocus() && !reducedMotion
         const animation = walking ? avatarWalk : null
         if(avatarViewer.animation !== animation){
             const angle = avatarViewer.playerObject.rotation.y
@@ -512,8 +512,14 @@
                 scheduleAttraction()
             }
         })
-        window.addEventListener('blur', clearAttractionCycle)
-        window.addEventListener('focus', () => scheduleAttraction())
+        window.addEventListener('blur', () => {
+            syncAvatar()
+            clearAttractionCycle()
+        })
+        window.addEventListener('focus', () => {
+            syncAvatar()
+            scheduleAttraction()
+        })
         if(window.MutationObserver != null){
             const homeObserver = new window.MutationObserver(() => {
                 syncAvatar()
