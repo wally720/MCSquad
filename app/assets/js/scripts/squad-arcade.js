@@ -118,7 +118,6 @@
         timeline
             .add(get('.sa-server-icon-stage'), { opacity: [.35, 1], scale: [1.38, .82, 1], rotate: [-8, 2, 0], duration: 520 }, 0)
             .add(get('.sa-server-copy'), { opacity: [.35, 1], x: [22, -4, 0], duration: 390 }, 70)
-            .add(getAll('.sa-server-meta span'), { opacity: [.4, 1], y: [10, 0], delay: anime.stagger(38), duration: 300 }, 150)
     }
 
     function runThemePulse(){
@@ -295,7 +294,7 @@
     }
 
     function updateStatus(online, players){
-        setText('[data-sa-status]', online ? 'ONLINE' : 'OFFLINE')
+        setText('[data-sa-status]', online ? 'En línea' : 'Sin conexión')
         setText('[data-sa-players]', online ? players : '--')
     }
 

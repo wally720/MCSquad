@@ -19,21 +19,26 @@
 
         <div class="sa-stage">
             <article class="sa-cartridge" aria-labelledby="sa-server-name">
-                <div class="sa-kicker"><span>PARTIDA SELECCIONADA</span><b data-sa-server-id>CARGANDO</b></div>
+                <div class="sa-kicker">
+                    <div><span>PARTIDA SELECCIONADA</span><b data-sa-server-id>CARGANDO</b></div>
+                    <button class="sa-change-server" type="button" data-sa-select-server>CAMBIAR SERVIDOR <span aria-hidden="true">&#8596;</span></button>
+                </div>
                 <div class="sa-server-label">
                     <div class="sa-server-icon-stage">
                         <img data-sa-server-icon src="assets/images/SealCircle.png" alt="">
                     </div>
                     <div class="sa-server-copy">
                         <h1 id="sa-server-name" data-sa-server-name>Cargando servidor</h1>
+                        <div class="sa-server-meta">
+                            <span><b data-sa-status>Comprobando</b></span>
+                            <span><b data-sa-players>--</b> jugadores</span>
+                        </div>
                         <p data-sa-server-description>Esperando la distribución del launcher.</p>
+                        <div class="sa-server-meta sa-server-versions">
+                            <span>Minecraft <b data-sa-minecraft-version>--</b></span>
+                            <span>Pack <b data-sa-pack-version>--</b></span>
+                        </div>
                     </div>
-                </div>
-                <div class="sa-server-meta">
-                    <span>MC <b data-sa-minecraft-version>--</b></span>
-                    <span>PACK <b data-sa-pack-version>--</b></span>
-                    <span>ESTADO <b data-sa-status>COMPROBANDO</b></span>
-                    <span>JUGADORES <b data-sa-players>--</b></span>
                 </div>
                 <button class="sa-update-mission" type="button" data-sa-update-mission data-sa-open="settings" data-sa-settings-tab="settingsNavUpdate" hidden aria-live="polite" aria-label="Misión disponible">
                     <span class="sa-update-mission-icon" aria-hidden="true">◆</span>
@@ -43,7 +48,6 @@
                     </span>
                     <span class="sa-update-mission-action" aria-hidden="true">VER</span>
                 </button>
-                <button class="sa-change-server" type="button" data-sa-select-server>CAMBIAR SERVIDOR <span aria-hidden="true">&#8596;</span></button>
             </article>
 
             <button class="sa-player" type="button" data-sa-open="account" aria-label="Administrar cuenta seleccionada">
@@ -70,8 +74,6 @@
                     <span class="sa-play-sheen" aria-hidden="true"></span>
                     <span class="sa-play-shockwave" aria-hidden="true"></span>
                 </button>
-                <button class="sa-tile sa-tile-mods" type="button" data-sa-open="mods"><span aria-hidden="true">+</span><strong>MODS</strong><small>ARMÁ TU PARTIDA</small></button>
-                <button class="sa-tile sa-tile-settings" type="button" data-sa-open="settings"><span aria-hidden="true">&#9670;</span><strong>AJUSTES</strong><small>CONFIGURÁ EL JUEGO</small></button>
             </div>
         </div>
 
