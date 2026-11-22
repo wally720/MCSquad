@@ -319,14 +319,10 @@ async function downloadJava(effectiveJavaOptions, launchAfter = true) {
 
 }
 
-// Keep reference to Minecraft Process
-let proc
-// Is DiscordRPC enabled
-let hasRPC = false
 // Joined server regex
 // Change this if your server uses something different.
 const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
-const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+)$/
+const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+|Starting FancyModLoader version .+)$/m
 const MIN_LINGER = 5000
 
 async function dlAsync(login = true) {
@@ -444,14 +440,26 @@ async function dlAsync(login = true) {
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
         const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
 
+        let proc
+        let hasRPC = false
+        let launchDetected = false
+        let launchFailed = false
+        let launchTimer
+
+        const failLaunch = (description) => {
+            if(!launchDetected && !launchFailed){
+                launchFailed = true
+                showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), description)
+            }
+        }
+
         const onLoadComplete = () => {
+            launchTimer = undefined
             toggleLaunchArea(false)
             if(hasRPC){
                 DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.loading'))
                 proc.stdout.on('data', gameStateChange)
             }
-            proc.stdout.removeListener('data', tempListener)
-            proc.stderr.removeListener('data', gameErrorListener)
         }
         const start = Date.now()
 
@@ -460,13 +468,11 @@ async function dlAsync(login = true) {
         // the client application has started, and we can hide
         // the progress bar stuff.
         const tempListener = function(data){
-            if(GAME_LAUNCH_REGEX.test(data.trim())){
-                const diff = Date.now()-start
-                if(diff < MIN_LINGER) {
-                    setTimeout(onLoadComplete, MIN_LINGER-diff)
-                } else {
-                    onLoadComplete()
-                }
+            if(!launchFailed && GAME_LAUNCH_REGEX.test(data.trim())){
+                launchDetected = true
+                proc.stdout.removeListener('data', tempListener)
+                proc.stderr.removeListener('data', gameErrorListener)
+                launchTimer = setTimeout(onLoadComplete, Math.max(0, MIN_LINGER - (Date.now() - start)))
             }
         }
 
@@ -484,17 +490,34 @@ async function dlAsync(login = true) {
             data = data.trim()
             if(data.indexOf('No se pudo encontrar o cargar la clase principal net.minecraft.launchwrapper.Launch') > -1){
                 loggerLaunchSuite.error('El lanzamiento del juego falló, LaunchWrapper no se descargó correctamente.')
-                showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringLaunchTitle'), Lang.queryJS('landing.dlAsync.launchWrapperNotDownloaded'))
+                failLaunch(Lang.queryJS('landing.dlAsync.launchWrapperNotDownloaded'))
             }
         }
 
         try {
             // Build Minecraft process.
-            proc = pb.build()
+            proc = await pb.build()
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)
             proc.stderr.on('data', gameErrorListener)
+            proc.once('error', (err) => {
+                loggerLaunchSuite.error('Minecraft process error.', err)
+                failLaunch(Lang.queryJS('landing.dlAsync.checkConsoleForDetails'))
+            })
+            proc.once('close', (code, signal) => {
+                clearTimeout(launchTimer)
+                if(!launchDetected){
+                    loggerLaunchSuite.error('Minecraft exited before startup.', { code, signal })
+                    failLaunch(Lang.queryJS('landing.dlAsync.checkConsoleForDetails'))
+                } else if(launchTimer != null){
+                    toggleLaunchArea(false)
+                }
+                if(hasRPC){
+                    DiscordWrapper.shutdownRPC()
+                    hasRPC = false
+                }
+            })
 
             setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
 
@@ -502,12 +525,6 @@ async function dlAsync(login = true) {
             if(distro.rawDistribution.discord != null && serv.rawServer.discord != null){
                 DiscordWrapper.initRPC(distro.rawDistribution.discord, serv.rawServer.discord)
                 hasRPC = true
-                proc.on('close', (code, signal) => {
-                    loggerLaunchSuite.info('Cerrando Discord Rich Presence..')
-                    DiscordWrapper.shutdownRPC()
-                    hasRPC = false
-                    proc = null
-                })
             }
 
         } catch(err) {

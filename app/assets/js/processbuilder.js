@@ -4,6 +4,7 @@ const crypto                = require('crypto')
 const fs                    = require('fs-extra')
 const { LoggerUtil }        = require('helios-core')
 const { getMojangOS, isLibraryCompatible, mcVersionAtLeast }  = require('helios-core/common')
+const { ensureJavaDirIsRoot, resolveJvmSettings } = require('helios-core/java')
 const { Type }              = require('helios-distribution-types')
 const os                    = require('os')
 const path                  = require('path')
@@ -44,7 +45,16 @@ class ProcessBuilder {
     /**
      * Convienence method to run the functions typically used to build a process.
      */
-    build(){
+    async build(){
+        const java = ConfigManager.getJavaExecutable(this.server.rawServer.id)
+        if(mcVersionAtLeast('26.3', this.vanillaManifest.id)){
+            const javaRoot = ensureJavaDirIsRoot(path.normalize(java))
+            const javaArch = (await resolveJvmSettings([javaRoot]))[javaRoot]?.['os.arch']
+            this.javaNativeArch = { amd64: 'x64', x86_64: 'x64', aarch64: 'arm64', arm64: 'arm64' }[javaArch]
+            if(!this.javaNativeArch){
+                throw new Error(`Unsupported Java architecture: ${javaArch}`)
+            }
+        }
         fs.ensureDirSync(this.gameDir)
         const tempNativePath = path.join(os.tmpdir(), ConfigManager.getTempNativeFolder(), crypto.pseudoRandomBytes(16).toString('hex'))
         process.throwDeprecation = true
@@ -77,7 +87,7 @@ class ProcessBuilder {
 
         logger.info('Launch Arguments:', loggableArgs)
 
-        const child = child_process.spawn(ConfigManager.getJavaExecutable(this.server.rawServer.id), args, {
+        const child = child_process.spawn(java, args, {
             cwd: this.gameDir,
             detached: ConfigManager.getLaunchDetached()
         })
@@ -722,6 +732,18 @@ class ProcessBuilder {
         for(let i=0; i<libArr.length; i++){
             const lib = libArr[i]
             if(isLibraryCompatible(lib.rules, lib.natives)){
+
+                if(this.javaNativeArch && !lib.natives){
+                    const classifier = lib.name.split(':')[3]
+                    if(classifier?.startsWith('natives-') || /^(linux|osx)-(aarch_64|x86_64)$/.test(classifier)){
+                        const arm = /(?:arm64|aarch_64)$/.test(classifier)
+                        if(this.javaNativeArch === (arm ? 'arm64' : 'x64')){
+                            // Keep the JAR so LWJGL can find resources at their original paths.
+                            libs[lib.name] = path.join(this.libPath, lib.downloads.artifact.path)
+                        }
+                        continue
+                    }
+                }
 
                 // Pre-1.19 has a natives object.
                 if(lib.natives != null) {
