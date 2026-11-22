@@ -277,19 +277,86 @@
         }
     }
 
+    const avatarCanvas = get('[data-sa-skin-view]')
+    const avatarPanel = avatarCanvas.parentElement
+    const avatarImage = get('[data-sa-skin]')
+    let avatarViewer = null
+    let avatarUuid = null
+    let avatarRequest = 0
+    let avatarWalk = null
+
+    function syncAvatar(){
+        if(avatarViewer == null){
+            return
+        }
+        const active = isHomeActive() && avatarPanel.clientWidth > 0 && avatarPanel.clientHeight > 0
+        const walking = active && !reducedMotion
+        const animation = walking ? avatarWalk : null
+        if(avatarViewer.animation !== animation){
+            const angle = avatarViewer.playerObject.rotation.y
+            avatarViewer.animation = animation
+            avatarViewer.playerObject.rotation.y = angle
+        }
+        avatarViewer.renderPaused = !walking
+        if(active){
+            const { clientWidth, clientHeight } = avatarPanel
+            if(avatarViewer.width !== clientWidth || avatarViewer.height !== clientHeight){
+                avatarViewer.setSize(clientWidth, clientHeight)
+            }
+            avatarViewer.render()
+        }
+    }
+
+    function showStaticAvatar(){
+        avatarViewer?.dispose()
+        avatarViewer = null
+        avatarPanel.hidden = true
+        avatarImage.hidden = !avatarUuid
+    }
+
+    async function loadAvatar(uuid, request){
+        try {
+            const { SkinViewer, WalkingAnimation } = require('skinview3d')
+            const texture = new Image()
+            texture.crossOrigin = 'anonymous'
+            texture.src = `https://mc-heads.net/skin/${encodeURIComponent(uuid)}`
+            await texture.decode()
+            if(request !== avatarRequest){
+                return
+            }
+            avatarViewer = new SkinViewer({ canvas: avatarCanvas, renderPaused: true, pixelRatio: 1.5 })
+            avatarViewer.loadSkin(texture)
+            avatarViewer.playerObject.rotation.y = -Math.PI / 6
+            avatarWalk = new WalkingAnimation()
+            avatarWalk.speed = .65
+            avatarViewer.controls.enableZoom = false
+            avatarViewer.controls.addEventListener('change', syncAvatar)
+            avatarPanel.hidden = false
+            syncAvatar()
+            avatarImage.hidden = true
+        } catch(error){
+            if(request === avatarRequest){
+                showStaticAvatar()
+                loggerLanding.warn('Unable to load the 3D avatar.', error)
+            }
+        }
+    }
+
     function updateAccount(account){
         setText('[data-sa-account-name]', account?.displayName, 'Sin cuenta')
-        const skin = get('[data-sa-skin]')
-        if(skin != null){
-            if(account?.uuid){
-                skin.src = `https://mc-heads.net/body/${account.uuid}/right`
-                skin.alt = `Skin de ${account.displayName || 'la cuenta seleccionada'}`
-                skin.hidden = false
-            } else {
-                skin.removeAttribute('src')
-                skin.alt = ''
-                skin.hidden = true
-            }
+        const uuid = account?.uuid || null
+        avatarImage.alt = uuid ? `Skin de ${account.displayName || 'la cuenta seleccionada'}` : ''
+        if(uuid === avatarUuid){
+            return
+        }
+        avatarUuid = uuid
+        const request = ++avatarRequest
+        showStaticAvatar()
+        if(uuid){
+            avatarImage.src = `https://mc-heads.net/body/${encodeURIComponent(uuid)}/right`
+            void loadAvatar(uuid, request)
+        } else {
+            avatarImage.removeAttribute('src')
         }
     }
 
@@ -416,8 +483,19 @@
             youtube.addEventListener('click', event => event.preventDefault())
         }
 
+        new ResizeObserver(syncAvatar).observe(avatarPanel)
+        avatarCanvas.addEventListener('webglcontextlost', showStaticAvatar)
+        avatarCanvas.addEventListener('keydown', event => {
+            if(!avatarViewer || !['ArrowLeft', 'ArrowRight'].includes(event.key)){
+                return
+            }
+            event.preventDefault()
+            avatarViewer.playerObject.rotation.y += event.key === 'ArrowLeft' ? -.2 : .2
+            syncAvatar()
+        })
         motionPreference.addEventListener('change', event => {
             reducedMotion = event.matches
+            syncAvatar()
             if(reducedMotion){
                 clearAttractionCycle()
                 activeAnimations.forEach(animation => animation.complete(true))
@@ -427,6 +505,7 @@
             }
         })
         document.addEventListener('visibilitychange', () => {
+            syncAvatar()
             if(document.hidden){
                 clearAttractionCycle()
             } else {
@@ -437,6 +516,7 @@
         window.addEventListener('focus', () => scheduleAttraction())
         if(window.MutationObserver != null){
             const homeObserver = new window.MutationObserver(() => {
+                syncAvatar()
                 if(isHomeActive()){
                     scheduleAttraction()
                 } else {

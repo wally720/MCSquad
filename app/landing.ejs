@@ -50,12 +50,15 @@
                 </button>
             </article>
 
-            <button class="sa-player" type="button" data-sa-open="account" aria-label="Administrar cuenta seleccionada">
+            <div class="sa-player">
                 <span class="sa-player-badge">P1</span>
                 <span class="sa-skin-fallback" aria-hidden="true">?</span>
                 <img data-sa-skin alt="Skin de la cuenta seleccionada">
-                <span class="sa-player-name"><small>CUENTA</small><strong data-sa-account-name>Sin cuenta</strong></span>
-            </button>
+                <div class="sa-skin-view" hidden>
+                    <canvas data-sa-skin-view tabindex="0" aria-label="Avatar 3D. Arrastrá o usá las flechas para girarlo."></canvas>
+                </div>
+                <button class="sa-player-name" type="button" data-sa-open="account" aria-label="Administrar cuenta seleccionada"><small>CUENTA</small><strong data-sa-account-name>Sin cuenta</strong></button>
+            </div>
 
             <div class="sa-actions">
                 <button class="sa-play" type="button" data-sa-play disabled>

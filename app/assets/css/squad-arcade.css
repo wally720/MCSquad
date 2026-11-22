@@ -253,7 +253,7 @@
     position: absolute;
     inset: 60px 0 34px;
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) 190px;
+    grid-template-columns: minmax(360px, 1fr) clamp(190px, 20%, 420px);
     grid-template-rows: minmax(0, 1fr) 84px;
     gap: 11px;
     padding: 17px 22px 14px;
@@ -568,12 +568,16 @@
     pointer-events: none;
 }
 
-.squad-arcade .sa-player > img {
+.squad-arcade .sa-player > img,
+.squad-arcade .sa-skin-view {
     position: absolute;
     z-index: 1;
     inset: 19px 8px 36px;
     width: calc(100% - 16px);
     height: calc(100% - 55px);
+}
+
+.squad-arcade .sa-player > img {
     object-fit: contain;
     transform: scaleX(-1);
     filter: drop-shadow(7px 9px #15102399);
@@ -599,6 +603,10 @@
     color: #ffffff55;
     font-size: 70px;
     font-weight: 800;
+}
+
+.squad-arcade .sa-player:has(> img[src]:not([hidden]), > .sa-skin-view:not([hidden])) .sa-skin-fallback {
+    display: none;
 }
 
 .squad-arcade .sa-player-name {
@@ -852,6 +860,16 @@
 
 .squad-arcade .sa-change-server span {
     transition: transform .14s ease;
+}
+
+.squad-arcade .sa-skin-view canvas {
+    display: block;
+    cursor: grab;
+    touch-action: none;
+}
+
+.squad-arcade .sa-skin-view canvas:active {
+    cursor: grabbing;
 }
 
 .squad-arcade .sa-footer {
