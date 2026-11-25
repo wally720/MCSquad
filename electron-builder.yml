@@ -14,6 +14,13 @@ files:
   - '!test/**/*'
   - '!excluir'
   - '!**/*.map'
+  # skinview3d imports these at runtime; dependency examples are excluded by default.
+  - from: 'node_modules/three/examples/jsm'
+    to: 'node_modules/three/examples/jsm'
+    filter:
+      - 'controls/OrbitControls.js'
+      - 'postprocessing/{EffectComposer,MaskPass,Pass,RenderPass,ShaderPass}.js'
+      - 'shaders/{CopyShader,FXAAShader}.js'
 
 extraResources:
   - 'libraries'
